@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { getFriendlyAuthError } from '../../utils/authError'
 import { isValidEmail, isValidPassword } from '../../utils/authValidation'
@@ -64,17 +64,13 @@ export default function AuthPage({ initialMode }) {
       setIsSubmitting(true)
       if (mode === 'signup') {
         await signup(cleanEmail, password)
-        setSuccess('Account created successfully! Redirecting to your dashboard...')
-        setTimeout(() => navigate(from, { replace: true }), 200)
       } else {
         await login(cleanEmail, password)
-        navigate(from, { replace: true })
       }
+      setSuccess('Redirecting to your dashboard...')
+      setTimeout(() => navigate(from, { replace: true }), 100)
     } catch (authError) {
       console.error('[AuthPage] Authentication error', authError)
-      if (authError?.message?.toLowerCase().includes('email not confirmed')) {
-        resendConfirmationEmail(cleanEmail).catch(() => {})
-      }
       setError(getFriendlyAuthError(authError))
     } finally {
       setIsSubmitting(false)
