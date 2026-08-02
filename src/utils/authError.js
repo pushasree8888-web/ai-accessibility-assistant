@@ -1,7 +1,6 @@
 export function getFriendlyAuthError(error) {
   const message = error?.message || error?.error_description || ''
   const status = error?.status || 0
-  const name = error?.name || ''
 
   if (
     message.includes('Failed to fetch') ||
@@ -11,6 +10,10 @@ export function getFriendlyAuthError(error) {
     message.includes('invalid claim')
   ) {
     return 'Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.'
+  }
+
+  if (message.toLowerCase().includes('email not confirmed')) {
+    return 'Your email address is not confirmed yet. Please check your inbox for the confirmation link, or disable "Confirm email" in your Supabase Dashboard.'
   }
 
   if (

@@ -74,6 +74,16 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }
 
+  const resendConfirmationEmail = async (email) => {
+    console.info('[AuthContext] Resending confirmation email')
+    const { data, error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+    })
+    if (error) throw error
+    return data
+  }
+
   const value = useMemo(
     () => ({
       user,
@@ -84,6 +94,7 @@ export function AuthProvider({ children }) {
       login,
       loginWithGoogle,
       logout,
+      resendConfirmationEmail,
     }),
     [user, session, loading],
   )

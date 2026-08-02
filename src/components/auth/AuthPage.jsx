@@ -5,7 +5,7 @@ import { getFriendlyAuthError } from '../../utils/authError'
 import { isValidEmail, isValidPassword } from '../../utils/authValidation'
 
 export default function AuthPage({ initialMode }) {
-  const { user, login, signup, loginWithGoogle, loading } = useAuth()
+  const { user, login, signup, loginWithGoogle, resendConfirmationEmail, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -14,6 +14,7 @@ export default function AuthPage({ initialMode }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isResending, setIsResending] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -92,6 +93,25 @@ export default function AuthPage({ initialMode }) {
       console.error('[AuthPage] Google sign-in error', authError)
       setError(getFriendlyAuthError(authError))
       setIsSubmitting(false)
+    }
+  }
+
+  const handleResend = async () => {
+    const cleanEmail = email.trim()
+    if (!cleanEmail) {
+      setError('Please enter your email address to resend the confirmation email.')
+      return
+    }
+    try {
+      setIsResending(true)
+      await resendConfirmationEmail(cleanEmail)
+      setSuccess('Confirmation email resent! Please check your inbox.')
+      setError('')
+    } catch (err) {
+      console.error('[AuthPage] Resend confirmation error', err)
+      setError(getFriendlyAuthError(err))
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -176,9 +196,28 @@ export default function AuthPage({ initialMode }) {
             </label>
 
             {error ? (
-              <p className="auth-error" role="alert" aria-live="assertive">
-                {error}
-              </p>
+              <div className="auth-error" role="alert" aria-live="assertive">
+                <p style={{ margin: 0 }}>{error}</p>
+                {error.toLowerCase().includes('not confirmed') ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    style={{
+                      marginTop: '0.5rem',
+                      background: 'none',
+                      border: 'none',
+                      color: 'inherit',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      padding: 0,
+                    }}
+                  >
+                    {isResending ? 'Resending email…' : 'Resend confirmation email'}
+                  </button>
+                ) : null}
+              </div>
             ) : null}
 
             {success ? (
