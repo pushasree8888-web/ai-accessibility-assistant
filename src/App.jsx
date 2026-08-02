@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AuthPage from './components/auth/AuthPage'
 import ProtectedRoute from './components/ProtectedRoute'
 import PageLayout from './components/layout/PageLayout'
@@ -27,7 +27,7 @@ function RootRedirect() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <LanguageProvider>
           <PageLayout>
@@ -46,7 +46,7 @@ function App() {
           </PageLayout>
         </LanguageProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   )
 }
 
