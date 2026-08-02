@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function DashboardPage() {
-  const { currentUser, logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
         This area is only available after authentication. Your session is currently active.
       </p>
       <p className="assistant-page__description">
-        Signed in as <strong>{currentUser?.email || 'your account'}</strong>
+        Signed in as <strong>{user?.email || 'your account'}</strong>
       </p>
       <button type="button" className="large-button" onClick={handleLogout}>
         Log out
@@ -30,4 +30,3 @@ export default function DashboardPage() {
     </section>
   )
 }
-

@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 export default function Header() {
-  const { currentUser, logout } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -28,7 +28,7 @@ export default function Header() {
           <Link to="/vision">Vision</Link>
           <Link to="/hearing">Hearing</Link>
           <Link to="/communication">Communication</Link>
-          {currentUser ? (
+          {user ? (
             <>
               <Link to="/dashboard">Dashboard</Link>
               <button
@@ -56,5 +56,3 @@ export default function Header() {
     </header>
   )
 }
-
-

@@ -1,8 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AuthPage from './components/auth/AuthPage'
-import ProtectedRoute from './components/auth/ProtectedRoute'
+import ProtectedRoute from './components/ProtectedRoute'
 import PageLayout from './components/layout/PageLayout'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import CommunicationAssistant from './pages/CommunicationAssistant'
 import DashboardPage from './pages/DashboardPage'
 import HearingAssistant from './pages/HearingAssistant'
@@ -11,13 +11,17 @@ import VisionAssistant from './pages/VisionAssistant'
 import './styles/accessai.css'
 
 function RootRedirect() {
-  const { currentUser, loading } = useAuth()
+  const { user, loading } = useAuth()
 
   if (loading) {
-    return <div className="auth-status">Preparing your experience…</div>
+    return (
+      <div className="auth-status" aria-live="polite">
+        Preparing your experience…
+      </div>
+    )
   }
 
-  return currentUser ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+  return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
 }
 
 function App() {
@@ -27,7 +31,8 @@ function App() {
         <PageLayout>
           <Routes>
             <Route path="/" element={<RootRedirect />} />
-            <Route path="/login" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage initialMode="login" />} />
+            <Route path="/signup" element={<AuthPage initialMode="signup" />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/home" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

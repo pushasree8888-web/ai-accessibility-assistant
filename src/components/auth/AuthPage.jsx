@@ -1,30 +1,45 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../contexts/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 import { getFriendlyAuthError } from '../../utils/authError'
 import { isValidEmail, isValidPassword } from '../../utils/authValidation'
 
-export default function AuthPage() {
-  const { currentUser, login, signup, loginWithGoogle, loading } = useAuth()
+export default function AuthPage({ initialMode }) {
+  const { user, login, signup, loginWithGoogle, loading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState('login')
+
+  const defaultMode = initialMode || (location.pathname === '/signup' ? 'signup' : 'login')
+  const [mode, setMode] = useState(defaultMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const from = useMemo(() => location.state?.from?.pathname || '/dashboard', [location.state])
 
   useEffect(() => {
-    if (!loading && currentUser) {
+    if (initialMode) {
+      setMode(initialMode)
+    } else if (location.pathname === '/signup') {
+      setMode('signup')
+    } else if (location.pathname === '/login') {
+      setMode('login')
+    }
+  }, [location.pathname, initialMode])
+
+  useEffect(() => {
+    if (!loading && user) {
       navigate(from, { replace: true })
     }
-  }, [currentUser, loading, navigate, from])
+  }, [user, loading, navigate, from])
 
   const handleModeSwitch = (newMode) => {
     setMode(newMode)
     setError('')
+    setSuccess('')
+    navigate(newMode === 'signup' ? '/signup' : '/login', { replace: true })
   }
 
   const handleSubmit = async (event) => {
@@ -32,6 +47,7 @@ export default function AuthPage() {
     const cleanEmail = email.trim()
     console.info('[AuthPage] Form submitted', { mode, email: cleanEmail })
     setError('')
+    setSuccess('')
 
     if (!isValidEmail(cleanEmail)) {
       setError('Please enter a valid email address.')
@@ -46,11 +62,17 @@ export default function AuthPage() {
     try {
       setIsSubmitting(true)
       if (mode === 'signup') {
-        await signup(cleanEmail, password)
+        const result = await signup(cleanEmail, password)
+        if (result?.user && !result?.session) {
+          setSuccess('Account created successfully! Please check your email to confirm your registration.')
+        } else {
+          setSuccess('Account created successfully! Redirecting...')
+          setTimeout(() => navigate(from, { replace: true }), 500)
+        }
       } else {
         await login(cleanEmail, password)
+        navigate(from, { replace: true })
       }
-      navigate(from, { replace: true })
     } catch (authError) {
       console.error('[AuthPage] Authentication error', authError)
       setError(getFriendlyAuthError(authError))
@@ -62,23 +84,26 @@ export default function AuthPage() {
   const handleGoogle = async () => {
     console.info('[AuthPage] Google sign-in requested')
     setError('')
+    setSuccess('')
     try {
       setIsSubmitting(true)
       await loginWithGoogle()
-      navigate(from, { replace: true })
     } catch (authError) {
       console.error('[AuthPage] Google sign-in error', authError)
       setError(getFriendlyAuthError(authError))
-    } finally {
       setIsSubmitting(false)
     }
   }
 
   if (loading) {
-    return <div className="auth-status">Preparing your experience…</div>
+    return (
+      <div className="auth-status" aria-live="polite">
+        Preparing your experience…
+      </div>
+    )
   }
 
-  if (currentUser) {
+  if (user) {
     return <Navigate to={from} replace />
   }
 
@@ -100,6 +125,8 @@ export default function AuthPage() {
             onClick={() => handleModeSwitch('login')}
             role="tab"
             aria-selected={mode === 'login'}
+            id="tab-login"
+            aria-controls="panel-auth"
           >
             Login
           </button>
@@ -109,56 +136,89 @@ export default function AuthPage() {
             onClick={() => handleModeSwitch('signup')}
             role="tab"
             aria-selected={mode === 'signup'}
+            id="tab-signup"
+            aria-controls="panel-auth"
           >
             Sign Up
           </button>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
-          <label className="auth-field" htmlFor="email">
-            <span>Email</span>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              placeholder="name@example.com"
-            />
-          </label>
+        <div id="panel-auth" role="tabpanel" aria-labelledby={mode === 'login' ? 'tab-login' : 'tab-signup'}>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            <label className="auth-field" htmlFor="email">
+              <span>Email</span>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                placeholder="name@example.com"
+                aria-required="true"
+              />
+            </label>
 
-          <label className="auth-field" htmlFor="password">
-            <span>Password</span>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              placeholder="At least 8 characters"
-            />
-          </label>
+            <label className="auth-field" htmlFor="password">
+              <span>Password</span>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                placeholder="At least 8 characters"
+                aria-required="true"
+              />
+            </label>
 
-          {error ? <p className="auth-error" role="alert">{error}</p> : null}
+            {error ? (
+              <p className="auth-error" role="alert" aria-live="assertive">
+                {error}
+              </p>
+            ) : null}
 
-          <button type="submit" className="large-button auth-form__submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}
+            {success ? (
+              <p
+                className="auth-success"
+                role="status"
+                aria-live="polite"
+                style={{
+                  margin: 0,
+                  padding: '0.85rem 0.95rem',
+                  borderRadius: '0.75rem',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#065f46',
+                  fontWeight: 600,
+                }}
+              >
+                {success}
+              </p>
+            ) : null}
+
+            <button type="submit" className="large-button auth-form__submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Please wait…' : mode === 'login' ? 'Log in' : 'Create account'}
+            </button>
+          </form>
+
+          <div className="auth-divider" aria-hidden="true">
+            <span>or</span>
+          </div>
+
+          <button
+            type="button"
+            className="auth-google"
+            onClick={handleGoogle}
+            disabled={isSubmitting}
+            aria-label="Continue with Google Authentication"
+          >
+            {isSubmitting ? 'Working…' : 'Continue with Google'}
           </button>
-        </form>
-
-        <div className="auth-divider" aria-hidden="true">
-          <span>or</span>
         </div>
-
-        <button type="button" className="auth-google" onClick={handleGoogle} disabled={isSubmitting}>
-          {isSubmitting ? 'Working…' : 'Continue with Google'}
-        </button>
       </div>
     </section>
   )
 }
-
