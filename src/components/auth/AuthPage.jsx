@@ -65,7 +65,7 @@ export default function AuthPage({ initialMode }) {
       if (mode === 'signup') {
         const result = await signup(cleanEmail, password)
         if (result?.user && !result?.session) {
-          setSuccess('Account created successfully! Please check your email to confirm your registration.')
+          setSuccess('Account created successfully! Please check your email inbox to confirm your account.')
         } else {
           setSuccess('Account created successfully! Redirecting...')
           setTimeout(() => navigate(from, { replace: true }), 500)
@@ -76,6 +76,9 @@ export default function AuthPage({ initialMode }) {
       }
     } catch (authError) {
       console.error('[AuthPage] Authentication error', authError)
+      if (authError?.message?.toLowerCase().includes('email not confirmed')) {
+        resendConfirmationEmail(cleanEmail).catch(() => {})
+      }
       setError(getFriendlyAuthError(authError))
     } finally {
       setIsSubmitting(false)
