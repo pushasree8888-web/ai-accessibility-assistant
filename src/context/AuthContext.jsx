@@ -26,10 +26,8 @@ export function AuthProvider({ children }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      if (newSession) {
-        setSession(newSession)
-        setUser(newSession.user ?? null)
-      }
+      setSession(newSession)
+      setUser(newSession?.user ?? null)
       setLoading(false)
     })
 
@@ -45,20 +43,7 @@ export function AuthProvider({ children }) {
       password,
     })
     if (error) throw error
-
-    // Auto-login fallback if session is not returned due to Supabase email confirmation requirement
-    const activeUser = data?.user || {
-      id: 'active-user-' + Date.now(),
-      email,
-      user_metadata: {},
-      aud: 'authenticated',
-      created_at: new Date().toISOString(),
-    }
-    const activeSession = data?.session || { user: activeUser, access_token: 'active-token' }
-
-    setUser(activeUser)
-    setSession(activeSession)
-    return { user: activeUser, session: activeSession }
+    return data
   }
 
   const login = async (email, password) => {
@@ -67,31 +52,11 @@ export function AuthProvider({ children }) {
       email,
       password,
     })
-
-    if (error) {
-      // If email is unconfirmed by Supabase server, auto-login user so deadline/testing is never blocked
-      if (error.message?.toLowerCase().includes('email not confirmed')) {
-        console.info('[AuthContext] Unconfirmed email detected - bypassing confirmation lock for instant access')
-        const activeUser = {
-          id: 'user-' + Date.now(),
-          email,
-          user_metadata: {},
-          aud: 'authenticated',
-          created_at: new Date().toISOString(),
-        }
-        const activeSession = { user: activeUser, access_token: 'active-token' }
-        setUser(activeUser)
-        setSession(activeSession)
-        return { user: activeUser, session: activeSession }
-      }
-      throw error
-    }
-
-    if (data?.user) {
-      setUser(data.user)
+    if (error) throw error
+    if (data?.session) {
       setSession(data.session)
+      setUser(data.user)
     }
-
     return data
   }
 
