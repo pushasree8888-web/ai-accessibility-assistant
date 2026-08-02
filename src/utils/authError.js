@@ -12,6 +12,14 @@ export function getFriendlyAuthError(error) {
     return 'Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.'
   }
 
+  if (
+    message.toLowerCase().includes('email logins are disabled') ||
+    message.toLowerCase().includes('email provider is disabled') ||
+    message.toLowerCase().includes('signup is disabled')
+  ) {
+    return 'Email logins are disabled in your Supabase Dashboard. Enable Email provider under Authentication -> Providers -> Email in Supabase Dashboard.'
+  }
+
   if (message.toLowerCase().includes('email not confirmed')) {
     return 'Your email address is not confirmed yet. Please check your inbox for the confirmation link, or disable "Confirm email" in your Supabase Dashboard.'
   }

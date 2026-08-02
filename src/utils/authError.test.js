@@ -8,6 +8,12 @@ describe('getFriendlyAuthError for Supabase', () => {
     ).toBe('Supabase is not configured yet. Please add your VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to frontend/.env.')
   })
 
+  it('maps email logins disabled error', () => {
+    expect(
+      getFriendlyAuthError({ message: 'Email logins are disabled' }),
+    ).toBe('Email logins are disabled in your Supabase Dashboard. Enable Email provider under Authentication -> Providers -> Email in Supabase Dashboard.')
+  })
+
   it('maps invalid login credentials', () => {
     expect(
       getFriendlyAuthError({ message: 'Invalid login credentials' }),
