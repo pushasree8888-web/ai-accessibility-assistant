@@ -1,11 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { LANGUAGES, useLanguage } from '../../context/LanguageContext'
 
 export default function Header() {
   const { user, logout } = useAuth()
   const { selectedLanguage, changeLanguage } = useLanguage()
+  const location = useLocation()
   const navigate = useNavigate()
+
+  // Hide header navbar completely if user is not logged in or on authentication pages
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
+  if (!user || isAuthPage) {
+    return null
+  }
 
   const handleLogout = async () => {
     try {
@@ -57,29 +64,23 @@ export default function Header() {
             ))}
           </select>
 
-          {user ? (
-            <>
-              <Link to="/dashboard">Dashboard</Link>
-              <button
-                type="button"
-                className="site-nav__logout"
-                onClick={handleLogout}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text)',
-                  cursor: 'pointer',
-                  font: 'inherit',
-                  fontWeight: 600,
-                  padding: 0,
-                }}
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link to="/login">Login</Link>
-          )}
+          <Link to="/dashboard">Dashboard</Link>
+          <button
+            type="button"
+            className="site-nav__logout"
+            onClick={handleLogout}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text)',
+              cursor: 'pointer',
+              font: 'inherit',
+              fontWeight: 600,
+              padding: 0,
+            }}
+          >
+            Logout
+          </button>
         </nav>
       </div>
     </header>
