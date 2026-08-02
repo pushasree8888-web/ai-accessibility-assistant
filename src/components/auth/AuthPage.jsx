@@ -63,13 +63,9 @@ export default function AuthPage({ initialMode }) {
     try {
       setIsSubmitting(true)
       if (mode === 'signup') {
-        const result = await signup(cleanEmail, password)
-        if (result?.user && !result?.session) {
-          setSuccess('Account created successfully! Please check your email inbox to confirm your account.')
-        } else {
-          setSuccess('Account created successfully! Redirecting...')
-          setTimeout(() => navigate(from, { replace: true }), 500)
-        }
+        await signup(cleanEmail, password)
+        setSuccess('Account created successfully! Redirecting to your dashboard...')
+        setTimeout(() => navigate(from, { replace: true }), 200)
       } else {
         await login(cleanEmail, password)
         navigate(from, { replace: true })
@@ -95,6 +91,7 @@ export default function AuthPage({ initialMode }) {
     } catch (authError) {
       console.error('[AuthPage] Google sign-in error', authError)
       setError(getFriendlyAuthError(authError))
+    } finally {
       setIsSubmitting(false)
     }
   }
