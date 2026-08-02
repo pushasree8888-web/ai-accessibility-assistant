@@ -1,9 +1,59 @@
 import { useEffect, useRef, useState } from 'react'
 import LargeButton from '../components/ui/LargeButton'
+import { useLanguage } from '../context/LanguageContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
+const MULTI_LANG_RESPONSES = {
+  'en-US': {
+    description: "The image '{name}' has been analyzed. It displays primary visual objects, text elements, and surrounding environment details for accessibility guidance.",
+    objects: ['primary visual subject', 'text elements / display', 'surrounding environment'],
+    suggestion: 'Read primary focus labels, describe spatial orientation, and offer spoken audio guidance for visually impaired users.',
+  },
+  'es-ES': {
+    description: "La imagen '{name}' ha sido analizada. Muestra objetos visuales principales, texto y detalles del entorno para orientación de accesibilidad.",
+    objects: ['sujeto visual principal', 'elementos de texto', 'entorno circundante'],
+    suggestion: 'Lea las etiquetas principales, describa la orientación espacial y proporcione guía por voz.',
+  },
+  'fr-FR': {
+    description: "L'image '{name}' a été analysée. Elle affiche des objets visuels principaux, du texte et des détails de l'environnement.",
+    objects: ['sujet visuel principal', 'éléments de texte', 'environnement immédiat'],
+    suggestion: 'Lisez les étiquettes principales et fournissez des conseils vocaux pour les utilisateurs déficients visuels.',
+  },
+  'de-DE': {
+    description: "Das Bild '{name}' wurde analysiert. Es zeigt visuelle Hauptobjekte, Text und Umgebungsinformationen zur Barrierefreiheit.",
+    objects: ['Hauptobjekt', 'Textelemente', 'Umgebung'],
+    suggestion: 'Hauptbeschriftungen vorlesen und gesprochene Orientierungshilfe bieten.',
+  },
+  'hi-IN': {
+    description: "चित्र '{name}' का विश्लेषण किया गया है। यह दृश्य वस्तुओं, पाठ और आसपास के वातावरण का विवरण दिखाता है।",
+    objects: ['मुख्य दृश्य विषय', 'पाठ तत्व', 'आसपास का वातावरण'],
+    suggestion: 'मुख्य लेबल पढ़ें और दृष्टिबाधित उपयोगकर्ताओं के लिए बोलकर मार्गदर्शन प्रदान करें।',
+  },
+  'te-IN': {
+    description: "'{name}' చిత్రం విశ్లేషించబడింది. ఇది ప్రాథమిక వస్తువులు, వచనం మరియు పరిసరాల వివరాలను చూపుతుంది.",
+    objects: ['ప్రాథమిక విషయం', 'వచన అంశాలు', 'పరిసరాలు'],
+    suggestion: 'ముఖ్యమైన లేబుల్‌లను చదవండి మరియు దృష్టి లోపం ఉన్న వినియోగదారుల కోసం శ్రావ్యమైన మార్గదర్శకత్వం అందించండి.',
+  },
+  'ta-IN': {
+    description: "'{name}' படம் பகுப்பாய்வு செய்யப்பட்டது. இது முதன்மை காட்சி பொருட்கள் மற்றும் உரை விவரங்களை காட்டுகிறது.",
+    objects: ['முக்கிய பொருள்', 'உரை கூறுகள்', 'சுற்றுச்சூழல்'],
+    suggestion: 'முக்கிய உரைகளை உரக்கப் படித்து குரல் வழிகாட்டல் வழங்கவும்.',
+  },
+  'zh-CN': {
+    description: "图像 '{name}' 已完成无障碍分析。显示了主要的视觉对象、文本元素和周围环境细节。",
+    objects: ['主要视觉对象', '文本元素', '周围环境'],
+    suggestion: '朗读主要焦点标签，并为视障用户提供语音指引。',
+  },
+  'ar-SA': {
+    description: "تم تحليل الصورة '{name}'. وهي تعرض العناصر البصرية الرئيسية والنصوص والتفاصيل المحيطة للتوجيه وإمكانية الوصول.",
+    objects: ['العنصر البصري الرئيسي', 'النصوص', 'البيئة المحيطة'],
+    suggestion: 'اقرأ النصوص الرئيسية وقدم إرشادات صوتية للمستخدمين ضعاف البصر.',
+  },
+}
+
 export default function VisionAssistant() {
+  const { selectedLanguage } = useLanguage()
   const [file, setFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [analysis, setAnalysis] = useState(null)
@@ -64,6 +114,7 @@ export default function VisionAssistant() {
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('language', selectedLanguage.code)
 
       let response = await fetch(`${API_URL}/api/vision/analyze`, {
         method: 'POST',
@@ -88,12 +139,12 @@ export default function VisionAssistant() {
       setLoading(false)
     }
 
-    // Client fallback analysis if backend API is offline
+    const langData = MULTI_LANG_RESPONSES[selectedLanguage.code] || MULTI_LANG_RESPONSES['en-US']
     setAnalysis({
       success: true,
-      description: `The image '${file.name}' has been analyzed. It displays primary visual objects, text elements, and surrounding environment details for accessibility guidance.`,
-      objects: ['primary visual subject', 'text elements / display', 'surrounding environment'],
-      suggestion: 'Read primary focus labels, describe spatial orientation, and offer spoken audio guidance for visually impaired users.',
+      description: langData.description.replace('{name}', file.name),
+      objects: langData.objects,
+      suggestion: langData.suggestion,
     })
   }
 
@@ -109,7 +160,7 @@ export default function VisionAssistant() {
     const utterance = new SpeechSynthesisUtterance(analysis.description)
     utterance.rate = 1
     utterance.pitch = 1
-    utterance.lang = 'en-US'
+    utterance.lang = selectedLanguage.code
 
     utterance.onstart = () => {
       setSpeaking(true)
@@ -157,9 +208,9 @@ export default function VisionAssistant() {
 
   return (
     <section className="assistant-page" aria-labelledby="vision-assistant-title">
-      <h1 id="vision-assistant-title">Vision Assistant</h1>
+      <h1 id="vision-assistant-title">Vision Assistant ({selectedLanguage.flag} {selectedLanguage.name})</h1>
       <p className="assistant-page__description">
-        Upload an image to receive a quick accessibility analysis including detected objects and suggestions.
+        Upload an image to receive a quick accessibility analysis including detected objects and suggestions in {selectedLanguage.name}.
       </p>
 
       <div className="assistant-card assistant-card--centered">
@@ -175,7 +226,7 @@ export default function VisionAssistant() {
           aria-describedby="vision-upload-description"
         />
         <p id="vision-upload-description" className="assistant-note">
-          Choose a clear photo for the best accessibility analysis.
+          Choose a clear photo for the best accessibility analysis in {selectedLanguage.name}.
         </p>
 
         {previewUrl && (
@@ -193,11 +244,11 @@ export default function VisionAssistant() {
         {analysis && (
           <div className="result-panel">
             <div className="result-header">
-              <h2>Accessibility analysis</h2>
+              <h2>Accessibility analysis ({selectedLanguage.flag} {selectedLanguage.name})</h2>
               {speechSupported ? (
                 <div className="audio-controls">
                   <LargeButton onClick={handleReadAloud} ariaLabel="Read description aloud">
-                    🔊 Read Aloud
+                    🔊 Read Aloud ({selectedLanguage.name})
                   </LargeButton>
                   <LargeButton
                     onClick={handlePauseSpeech}

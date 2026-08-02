@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import LargeButton from '../components/ui/LargeButton'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function CommunicationAssistant() {
+  const { selectedLanguage } = useLanguage()
   const [text, setText] = useState('')
   const [status, setStatus] = useState('')
 
@@ -19,10 +21,10 @@ export default function CommunicationAssistant() {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.rate = 0.95
     utterance.pitch = 1.0
-    utterance.lang = 'en-US'
+    utterance.lang = selectedLanguage.code
 
     utterance.onstart = () => {
-      setStatus('Speaking your message now...')
+      setStatus(`Speaking your message in ${selectedLanguage.name}...`)
     }
 
     utterance.onend = () => {
@@ -39,14 +41,14 @@ export default function CommunicationAssistant() {
 
   return (
     <section className="assistant-page" aria-labelledby="communication-assistant-title">
-      <h1 id="communication-assistant-title">Communication Assistant</h1>
+      <h1 id="communication-assistant-title">Communication Assistant ({selectedLanguage.flag} {selectedLanguage.name})</h1>
       <p className="assistant-page__description">
-        Type a phrase and play it back with voice output for clearer communication.
+        Type a phrase and play it back with voice output in {selectedLanguage.name} for clearer communication.
       </p>
 
       <div className="assistant-card assistant-card--centered">
         <label className="input-label" htmlFor="communication-message">
-          Enter text to speak aloud
+          Enter text to speak aloud ({selectedLanguage.name})
         </label>
         <textarea
           id="communication-message"
@@ -54,15 +56,15 @@ export default function CommunicationAssistant() {
           rows="6"
           value={text}
           onChange={(event) => setText(event.target.value)}
-          placeholder="Type something like, 'Hello, how can I help you?'"
+          placeholder={`Type a message in ${selectedLanguage.name}...`}
         />
 
         <LargeButton
           onClick={handleSpeak}
           disabled={!text.trim()}
-          ariaLabel="Play typed message as speech"
+          ariaLabel={`Play typed message as speech in ${selectedLanguage.name}`}
         >
-          Play Voice
+          🔊 Play Voice ({selectedLanguage.name})
         </LargeButton>
 
         {status && <p className="assistant-note">{status}</p>}

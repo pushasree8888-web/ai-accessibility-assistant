@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import LargeButton from '../components/ui/LargeButton'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function HearingAssistant() {
+  const { selectedLanguage } = useLanguage()
   const [captions, setCaptions] = useState('')
   const [listening, setListening] = useState(false)
   const [supported, setSupported] = useState(true)
@@ -21,7 +23,7 @@ export default function HearingAssistant() {
     const recognition = new SpeechRecognition()
     recognition.continuous = true
     recognition.interimResults = true
-    recognition.lang = 'en-US'
+    recognition.lang = selectedLanguage.code
 
     recognition.onstart = () => {
       setListening(true)
@@ -101,7 +103,7 @@ export default function HearingAssistant() {
         recognitionRef.current.abort()
       }
     }
-  }, [])
+  }, [selectedLanguage.code])
 
   const startListening = () => {
     setError('')
@@ -139,9 +141,9 @@ export default function HearingAssistant() {
 
   return (
     <section className="assistant-page" aria-labelledby="hearing-assistant-title">
-      <h1 id="hearing-assistant-title">Hearing Assistant</h1>
+      <h1 id="hearing-assistant-title">Hearing Assistant ({selectedLanguage.flag} {selectedLanguage.name})</h1>
       <p className="assistant-page__description">
-        Speak naturally and see your words appear as large, readable captions on the screen.
+        Speak naturally in {selectedLanguage.name} and see your words appear as large, readable captions on the screen.
       </p>
 
       <div className="assistant-card assistant-card--centered">
@@ -149,9 +151,9 @@ export default function HearingAssistant() {
           <LargeButton
             onClick={startListening}
             disabled={!supported || listening}
-            ariaLabel="Start listening for speech"
+            ariaLabel={`Start listening for speech in ${selectedLanguage.name}`}
           >
-            🎤 Start Listening
+            🎤 Start Listening ({selectedLanguage.name})
           </LargeButton>
           <LargeButton
             onClick={stopListening}
@@ -170,8 +172,8 @@ export default function HearingAssistant() {
           </p>
         )}
 
-        <div className="caption-panel" aria-live="polite" aria-label="Live speech captions">
-          {captions || 'Your spoken words will appear here as captions.'}
+        <div className="caption-panel" aria-live="polite" aria-label={`Live speech captions in ${selectedLanguage.name}`}>
+          {captions || `Your spoken words in ${selectedLanguage.name} will appear here as captions.`}
         </div>
       </div>
     </section>
