@@ -2,13 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="refresh" content="0;URL=/ai-accessibility-assistant/#/" />
-    <title>Redirecting… — AccessAI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AccessAI — Mobile & Web Assistant</title>
     <script>
-      window.location.replace('/ai-accessibility-assistant/#/')
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/#/'
+      );
     </script>
   </head>
   <body>
-    <p>Redirecting to AccessAI Application…</p>
+    <p>Loading AccessAI for Mobile…</p>
   </body>
 </html>
